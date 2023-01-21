@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -29,12 +29,9 @@ async function run() {
     try {
         const productCollection = client.db('emaJohn').collection('products');
         app.get('/products', async (req, res) => {
-
             const page = req.query.page;
             const size = parseInt(req.query.size);
             console.log(page, size);
-
-
             const query = {}
             const cursor = productCollection.find(query);
             const products = await cursor.skip(page * size).limit(size).toArray();
@@ -42,21 +39,22 @@ async function run() {
             //  porjonto dekhabe
             const count = await productCollection.estimatedDocumentCount();
             res.send({ count, products });
+        });
+        app.post('/productsByIds', async (req, res) => {
+            const ids = req.body;
+            // console.log(ids)
+            const objectIds = ids.map(id => ObjectId(id))
+            const query = { _id: { $in: objectIds } };
+            const cursor = productCollection.find(query);
+            const products = await cursor.toArray();
+            res.send(products);
 
         })
-
-
     }
     finally {
-
     }
-
 }
 run().catch(err => console(err))
-
-
-
-
 app.get('/', (req, res) => {
 
     res.send('ema0jhon-server is running')
